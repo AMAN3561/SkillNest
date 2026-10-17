@@ -1,4 +1,5 @@
 const Category = require("../models/Category");
+const Course = require("../models/Course");
 
 exports.createCategory = async (req, res) => {
 	try {
@@ -42,9 +43,7 @@ exports.showAllCategories = async (req, res) => {
 		});
 	}
 };
-
 //categoryPageDetails 
-
 exports.categoryPageDetails = async (req, res) => {
     try {
             //get categoryId
@@ -69,16 +68,54 @@ exports.categoryPageDetails = async (req, res) => {
 
             //get top 10 selling courses
             //HW - write it on your own
-
+            const top10Courses = await Course.aggregate([
+                {
+                    $match:{
+                        status: "Published",
+                    },
+                },
+                {
+                    $addFields:{
+                        enrollmentCount:{
+                            $size:{
+                                $setUnion:[
+                                    {$ifNull: ["$studentsEnrolled", []]},
+                                    [],
+                                ],
+                            },
+                        },
+                    },
+                },
+                {
+                    $sort:{
+                        enrollmentCount: -1,
+                        _id: 1,
+                    },
+                },
+                {
+                    $limit: 10,
+                },
+                {
+                    $project:{
+                        courseName: 1,
+                        courseDescription: 1,
+                        price: 1,
+                        thumbnail: 1,
+                        intructor: 1,
+                        category: 1,
+                        enrollmentCount: 1,                  
+                    },
+                },
+            ]);
             //return response
             return res.status(200).json({
                 success:true,
                 data: {
                     selectedCategory,
                     differentCategories,
+                    top10Courses,
                 },
             });
-
     }
     catch(error ) {
         console.log(error);

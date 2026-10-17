@@ -30,9 +30,10 @@ exports.signup = async (req, res) => {
 			!email ||
 			!password ||
 			!confirmPassword ||
-			!otp
+			!otp ||
+			!accountType
 		) {
-			return res.status(403).send({
+			return res.status(400).send({
 				success: false,
 				message: "All Fields are required",
 			});
@@ -47,7 +48,7 @@ exports.signup = async (req, res) => {
 		}
 
 		// Check if user already exists
-		const existingUser = await User.findOne({ email });
+		const existingUser = await User.findOne({email});
 		if (existingUser) {
 			return res.status(400).json({
 				success: false,
@@ -56,7 +57,7 @@ exports.signup = async (req, res) => {
 		}
 
 		// Find the most recent OTP for the email
-		const response = await OTP.find({ email }).sort({ createdAt: -1 }).limit(1);
+		const response = await OTP.find({ email }).sort({ createdAt: -1 }).limit(1); // this sorting puts the newest OTP in front(descending order). limit(1) tells mongoDB to return most one matching document.
 		console.log(response);
 		if (response.length === 0) {
 			// OTP not found for the email
@@ -76,9 +77,10 @@ exports.signup = async (req, res) => {
 		const hashedPassword = await bcrypt.hash(password, 10);
 
 		// Create the user
-		let approved = "";
-		approved === "Instructor" ? (approved = false) : (approved = true);
-
+		let approved = true;
+		if(approved === "Instructor"){
+			approved = false;
+		}
 		// Create the Additional Profile For User
 		const profileDetails = await Profile.create({
 			gender: null,
@@ -140,7 +142,7 @@ exports.login = async (req, res) => {
 		}
 
 		// Generate JWT token and Compare Password
-		if (await bcrypt.compare(password, user.password)) {
+		if (await bcrypt.compare(password, user.password)) {// first one is -> login request mai bheja hua password , second h database se mila hua password hash.
 			const token = jwt.sign(
 				{ email: user.email, id: user._id, accountType: user.accountType},
 				process.env.JWT_SECRET,
@@ -178,7 +180,7 @@ exports.login = async (req, res) => {
 		});
 	}
 };
-// Send OTP For Email Verification
+// Send OTP For Email Verification for new account signup.
 exports.sendotp = async (req, res) => {
 	try {
 		const { email } = req.body;
@@ -202,14 +204,17 @@ exports.sendotp = async (req, res) => {
 			lowerCaseAlphabets: false,
 			specialChars: false,
 		});
-		const result = await OTP.findOne({ otp: otp });
+		let result = await OTP.findOne({ otp: otp });
 		console.log("Result is Generate OTP Func");
 		console.log("OTP", otp);
 		console.log("Result", result);
 		while (result) {
 			otp = otpGenerator.generate(6, {
 				upperCaseAlphabets: false,
+				lowerCaseAlphabets: false,
+				specialChars: false
 			});
+			result = await OTP.findOne({otp: otp});
 		}
 		const otpPayload = { email, otp };
 		const otpBody = await OTP.create(otpPayload);
@@ -256,10 +261,10 @@ exports.changePassword = async (req, res) => {
 		}
 
 		// Update password
-		const encryptedPassword = await bcrypt.hash(newPassword, 10);
+		const hashedPassword = await bcrypt.hash(newPassword, 10);
 		const updatedUserDetails = await User.findByIdAndUpdate(
 			req.user.id,
-			{ password: encryptedPassword },
+			{ password: hashedPassword },
 			{ new: true }
 		);
 

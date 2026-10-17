@@ -68,7 +68,10 @@ const userSchema = new mongoose.Schema(
 				ref: "courseProgress",
 			},
 		],
-
+		contactNumber:{
+			type: String,
+			trim: true,
+		},
 		// Add timestamps for when the document is created and last modified
 	},
 	{ timestamps: true }

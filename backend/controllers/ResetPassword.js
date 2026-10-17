@@ -2,9 +2,16 @@ const User = require("../models/User");
 const mailSender = require("../utils/mailSender");
 const bcrypt = require("bcrypt");
 const crypto = require("crypto");
+
 exports.resetPasswordToken = async (req, res) => {
 	try {
 		const email = req.body.email;
+		if(!email){
+			return res.status(400).json({
+				success: false,
+				message: "Email is required for resetting the password."
+			});
+		}
 		const user = await User.findOne({ email: email });
 		if (!user) {
 			return res.json({
@@ -12,7 +19,7 @@ exports.resetPasswordToken = async (req, res) => {
 				message: `This Email: ${email} is not Registered With Us Enter a Valid Email `,
 			});
 		}
-		const token = crypto.randomBytes(20).toString("hex");
+		const token = crypto.randomBytes(20).toString("hex"); // binary data ko hexadecimal string mein represent krta hai.
 
 		const updatedDetails = await User.findOneAndUpdate(
 			{ email: email },
