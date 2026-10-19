@@ -6,8 +6,6 @@ const {courseEnrollmentEmail} = require("../mail/templates/courseEnrollmentEmail
 const { default: mongoose } = require("mongoose");
 const crypto = require("crypto");
 
-
-
 //capture the payment and initiate the Razorpay order
 exports.capturePayment = async (req, res) => {
     //get courseId and UserID
@@ -124,7 +122,7 @@ exports.verifySignature = async (req, res) => {
 
                 console.log(enrolledCourse);
 
-                //find the student andadd the course to their list enrolled courses me 
+                //find the student and add the course to their list enrolled courses me 
                 const enrolledStudent = await User.findOneAndUpdate(
                                                 {_id:userId},
                                                 {$push:{courses:courseId}},
@@ -136,8 +134,8 @@ exports.verifySignature = async (req, res) => {
                 //mail send krdo confirmation wala 
                 const emailResponse = await mailSender(
                                         enrolledStudent.email,
-                                        "Congratulations from CodeHelp",
-                                        "Congratulations, you are onboarded into new CodeHelp Course",
+                                        "Congratulations from Learning_Platform",
+                                        "Congratulations, you are onboarded into new Learning_Platform Course",
                 );
 
                 console.log(emailResponse);
@@ -145,7 +143,6 @@ exports.verifySignature = async (req, res) => {
                     success:true,
                     message:"Signature Verified and COurse Added",
                 });
-
 
         }       
         catch(error) {
@@ -162,6 +159,4 @@ exports.verifySignature = async (req, res) => {
             message:'Invalid request',
         });
     }
-
-
 };
